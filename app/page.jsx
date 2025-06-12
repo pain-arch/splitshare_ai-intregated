@@ -1,12 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { FEATURES, STEPS } from "@/lib/landing";
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="flex flex-col pt-16">
       <section className="mt-20 pb-12 space-y-10 md:space-x-20 px-5">
+
         <div className="container mx-auto px-4 md:px-6 text-center space-y-6">
           <Badge variant="outline" className="bg-green-100 text-green-700">Split expenses. Simplify life.</Badge>
 
@@ -25,7 +29,50 @@ export default function Home() {
             </Button>
           </div>
         </div>
+
+        <div className="container mx-auto max-w-5xl overflow-hidden rounded-xl shadow-xl">
+          <div className="gradient p-1 aspect-[16/9]">
+            <Image
+              src="/hero.png"
+              alt="banner"
+              width={1280}
+              height={720}
+              className="rounded-lg mx-auto"
+              priority
+            />
+          </div>
+        </div>
       </section>
+
+      <section id="features" className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <Badge variant="outline" className="bg-green-100 text-green-700">Features</Badge>
+
+          <h2 className="gradient-title mt-2 text-3xl md:text-4xl">
+            Everything you need to split expenses
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-[700px] text-gray-500 md:text-xl/relaxed">
+            Our platform provides all hte tools you need to handle shared expenses with ease.</p>
+
+          <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {
+              FEATURES.map(({ title, Icon, bg, color, description }) => (
+                <Card key={title} className="flex flex-col items-center space-y-4 p-6 text-center gap-2">
+                  <div className={`rounded-full p-3 ${bg}`}>
+                    <Icon className={`h-6 w-6 ${color}`} />
+                  </div>
+
+                  <h3 className="text-xl font-bold">{title}</h3>
+                  <p className="text-gray-500">{description}</p>
+                </Card>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      
     </div>
   );
 }
