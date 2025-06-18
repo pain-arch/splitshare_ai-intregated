@@ -1,7 +1,9 @@
+import { AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FEATURES, STEPS } from "@/lib/landing";
+import { Card, CardContent } from "@/components/ui/card";
+import { FEATURES, STEPS, TESTIMONIALS } from "@/lib/landing";
+import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -83,7 +85,7 @@ export default function Home() {
           <p className="mx-auto mt-3 max-w-[700px] text-gray-500 md:text-xl/relaxed">
             Follow these simple steps to start tracking and splitting expenses with friends.</p>
 
-          <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-5xl gap-8 lg:grid-cols-3">
             {
               STEPS.map(({ description, label, title }) => (
                 <div key={title} className="flex flex-col items-center space-y-4">
@@ -97,7 +99,38 @@ export default function Home() {
         </div>
       </section>
 
-      
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <Badge variant="outline" className="bg-green-100 text-green-700">Testimonials</Badge>
+
+          <h2 className="gradient-title mt-2 text-3xl md:text-4xl">
+            What our users are saying
+          </h2>
+
+          <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {
+              TESTIMONIALS.map(({ quote, name, role, image }) => (
+                <Card key={name}>
+                  <CardContent>
+                    <p className="text-gray-500">{quote}</p>
+
+                    <div className="flex items-center space-x-3 mt-4">
+                      <Avatar>
+                        <AvatarImage className="w-10 h-10 rounded-3xl" src={image} alt={name}/>
+                        <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="text-sm font-medium">{name}</p>
+                        <p className="text-sm text-muted-foreground">{role}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            }
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
