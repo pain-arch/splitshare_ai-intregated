@@ -6,34 +6,37 @@ export const getAllContacts = query({
   handler: async (ctx) => {
     const currentUser = await ctx.runQuery(internal.users.getCurrentUser);
 
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
     const expensesYouPaid = await ctx.db
       .query("expenses")
-      .withIndex("by_user_and_group", (q) => {
-        q.eq("paidByUserId", currentUser._id).eq("groupId", undefined);
-      })
+      .withIndex("by_user_and_group", (q) =>
+        q.eq("paidByUserId", currentUser._id).eq("groupId", undefined)
+      )
       .collect();
 
-    const expensesNotPaidByYou = (
+    const expensesNotYouPaid = (
       await ctx.db
         .query("expenses")
-        .withIndex("by_user_and_group", (q) => {
-          q.eq("groupId", undefined);
-        })
+        .withIndex("by_user_and_group", (q) =>
+          q.eq("paidByUserId", currentUser._id).eq("groupId", undefined)
+        )
         .collect()
     ).filter(
       (e) =>
         e.paidByUserId !== currentUser._id &&
-        e.splits.some((s) => s.userId == currentUser._id)
+        e.splits.some((s) => s.userId === currentUser._id)
     );
 
-    const personalExpenses = [...expensesYouPaid, ...expensesNotPaidByYou];
+    const personalExpenses = [...expensesYouPaid, ...expensesNotYouPaid];
 
     const contactIds = new Set();
     personalExpenses.forEach((exp) => {
       if (exp.paidByUserId !== currentUser._id)
         contactIds.add(exp.paidByUserId);
 
-      // Add each user in the splits that isnt the current user
       exp.splits.forEach((s) => {
         if (s.userId !== currentUser._id) contactIds.add(s.userId);
       });
@@ -48,28 +51,25 @@ export const getAllContacts = query({
               id: u._id,
               name: u.name,
               email: u.email,
-              imageurl: u.imageUrl,
+              imageUrl: u.imageUrl,
               type: "user",
             }
           : null;
       })
     );
 
-    // g stands for group and m stands for member
-    const userGroups = (await ctx.db.query("groups").collect()).filter((g) =>
-      g.members
-        .some((m) => m.userId === currentUser._id)
-        .map((g) => ({
-          id: g._id,
-          name: g.name,
-          description: g.description,
-          memberCount: g.members.length,
-          type: "group",
-        }))
-    );
+    const userGroups = (await ctx.db.query("groups").collect())
+      .filter((g) => g.members.some((m) => m.userId === currentUser._id))
+      .map((g) => ({
+        id: g._id,
+        name: g.name,
+        description: g.description,
+        memberCount: g.members.length,
+        type: "group",
+      }));
 
     contactUsers.sort((a, b) => a?.name.localeCompare(b?.name));
-    userGroups.sort((a, b) => a?.name.localeCompare(b?.name));
+    userGroups.sort((a, b) => a.name.localeCompare(b.name));
 
     return {
       users: contactUsers.filter(Boolean),
@@ -82,9 +82,8 @@ export const createGroup = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    members: v.array(v.id("user")),
+    members: v.array(v.id("users")),
   },
-
   handler: async (ctx, args) => {
     const currentUser = await ctx.runQuery(internal.users.getCurrentUser);
 
@@ -94,13 +93,14 @@ export const createGroup = mutation({
 
     uniqueMembers.add(currentUser._id);
 
-    for (const memberId of uniqueMembers) {
-      if (!(await ctx.db.get(id)))
-        throw new Error(`user with id ${memberId} does not exist`);
+    for (const id of uniqueMembers) {
+      if (!(await ctx.db.get(id))) {
+        throw new Error(`User with ID ${id} does not exist`);
+      }
     }
 
     return await ctx.db.insert("groups", {
-      name: args.name,
+      name: args.name.trim(),
       description: args.description?.trim() ?? "",
       createdBy: currentUser._id,
       members: [...uniqueMembers].map((id) => ({
